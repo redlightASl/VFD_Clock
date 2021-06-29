@@ -27,7 +27,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <stdlib.h>
+#include "vfd08_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,19 +43,23 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+volatile unsigned char SETTING_FLAG;
+volatile unsigned char MODE_FLAG;
+volatile unsigned char ENTER_FLAG;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+RTC_TimeTypeDef RTC_time_struct;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void Task_time_display(void);
+void Task_time_setting(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -156,7 +162,64 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Task_time_display(void)
+{
+	char* hour_string;
+	char* minute_string;
+	char* second_string;
+	unsigned char hour_num;
+	unsigned char minute_num;
+	unsigned char second_num;
+	
+	HAL_RTC_GetTime(&hrtc,&RTC_time_struct,RTC_FORMAT_BCD);
+	hour_num = RTC_time_struct.Hours;
+	minute_num = RTC_time_struct.Minutes;
+	second_num = RTC_time_struct.Seconds;
+	sprintf(hour_string,"%d",hour_num);
+	sprintf(minute_string,"%d",minute_num);
+	sprintf(second_string,"%d",second_num);
+	
+	VFD_write_string(0,hour_string);
+	VFD_write_char(2,':');
+	VFD_write_string(3,minute_string);
+	VFD_write_char(5,':');
+	VFD_write_string(6,second_string);
+}
 
+void Task_time_setting(void)
+{
+	if(SETTING_FLAG == 1) //设置按钮长按时进入设置时间模式
+	{
+		while(1)
+		{
+			//被选中的部分闪烁
+			
+			
+			
+			
+			
+			
+			
+			//调节按钮短按增大时间
+			
+		
+			
+			
+			
+			
+			//调节按钮长按切换要调节的时间
+			
+			
+			
+			
+			if(ENTER_FLAG == 1) //设置按钮再次长按退出设置时间模式
+			{
+				SETTING_FLAG=0;
+				break;
+			}
+		}
+	}
+}
 /* USER CODE END 4 */
 
 /**

@@ -42,7 +42,9 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+extern volatile unsigned char SETTING_FLAG;
+extern volatile unsigned char MODE_FLAG;
+extern volatile unsigned char ENTER_FLAG;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -58,6 +60,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define MODE_Pin GPIO_PIN_1
+#define MODE_GPIO_Port GPIOA
+#define ENTER_Pin GPIO_PIN_2
+#define ENTER_GPIO_Port GPIOA
+#define EN_Pin GPIO_PIN_15
+#define EN_GPIO_Port GPIOB
+#define RESET_Pin GPIO_PIN_8
+#define RESET_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
