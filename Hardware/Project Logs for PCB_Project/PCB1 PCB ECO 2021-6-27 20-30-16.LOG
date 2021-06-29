@@ -1,0 +1,6 @@
+Removed Pin From Net: NetName=USART1_TX Pin=J1-3
+Removed Pin From Net: NetName=USART1_RX Pin=J1-4
+Added Pin To Net: NetName=USART1_RX Pin=J1-3
+Added Pin To Net: NetName=USART1_TX Pin=J1-4
+Added Member To Class: ClassName=Sheet1 Member=Component D1 BAT54C-KL3
+Added Room: Name=Sheet1
