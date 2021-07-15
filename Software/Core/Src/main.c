@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "rtc.h"
 #include "spi.h"
 #include "tim.h"
@@ -57,9 +58,9 @@ RTC_TimeTypeDef RTC_time_struct;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-void Task_time_display(void);
-void Task_time_setting(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -104,6 +105,12 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init();
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -128,14 +135,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -162,65 +168,29 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void Task_time_display(void)
-{
-	char* hour_string;
-	char* minute_string;
-	char* second_string;
-	unsigned char hour_num;
-	unsigned char minute_num;
-	unsigned char second_num;
-	
-	HAL_RTC_GetTime(&hrtc,&RTC_time_struct,RTC_FORMAT_BCD);
-	hour_num = RTC_time_struct.Hours;
-	minute_num = RTC_time_struct.Minutes;
-	second_num = RTC_time_struct.Seconds;
-	sprintf(hour_string,"%d",hour_num);
-	sprintf(minute_string,"%d",minute_num);
-	sprintf(second_string,"%d",second_num);
-	
-	VFD_write_string(0,hour_string);
-	VFD_write_char(2,':');
-	VFD_write_string(3,minute_string);
-	VFD_write_char(5,':');
-	VFD_write_string(6,second_string);
-}
 
-void Task_time_setting(void)
-{
-	if(SETTING_FLAG == 1) //设置按钮长按时进入设置时间模式
-	{
-		while(1)
-		{
-			//被选中的部分闪烁
-			
-			
-			
-			
-			
-			
-			
-			//调节按钮短按增大时间
-			
-		
-			
-			
-			
-			
-			//调节按钮长按切换要调节的时间
-			
-			
-			
-			
-			if(ENTER_FLAG == 1) //设置按钮再次长按退出设置时间模式
-			{
-				SETTING_FLAG=0;
-				break;
-			}
-		}
-	}
-}
 /* USER CODE END 4 */
+
+ /**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM4 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM4) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

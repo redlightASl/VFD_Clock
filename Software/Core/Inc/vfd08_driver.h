@@ -17,11 +17,11 @@ static uint8_t VFD_LIGHTNESS=0xff;
 */
 
 /* 底层适配函数 */
-void VFD_delay_microseconds(unsigned char time);
+void VFD_delay_microseconds(uint8_t time);
 void VFD_show(void);
 void VFD_init(void);
-void VFD_write_char(unsigned char x, unsigned char chr);
-void VFD_write_string(unsigned char x, unsigned char *str);
+void VFD_write_char(uint8_t x, uint8_t chr);
+void VFD_write_string(uint8_t x, uint8_t *str);
 #endif
 
 

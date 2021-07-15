@@ -6,7 +6,7 @@
 /* 移植时需要修改的函数 */
 
 //微秒延时
-void VFD_delay_microseconds(unsigned char time)
+void VFD_delay_microseconds(uint8_t time)
 {
 	HAL_Delay(1);
 }
@@ -43,7 +43,7 @@ void VFD_init(void)
  * 显示位置x:0-11(模组最多有11位)
  * 要显示的字符编码chr 
  */
-void VFD_write_char(unsigned char x, unsigned char chr)
+void VFD_write_char(uint8_t x, uint8_t chr)
 {
 	uint8_t Init_Adress=0x20 + x; //地址寄存器起始位置
 	uint8_t Print_Num=chr + 0x30;
@@ -58,7 +58,7 @@ void VFD_write_char(unsigned char x, unsigned char chr)
  * 显示位置x:0-11(模组最多有11位)
  * 要显示的字符串str
  */
-void VFD_write_string(unsigned char x, unsigned char *str)
+void VFD_write_string(uint8_t x, uint8_t *str)
 {
 	uint8_t Init_Adress=0x20 + x;//地址寄存器起始位置
 	HAL_SPI_Transmit(&hspi1,&Init_Adress,sizeof(Init_Adress),5); 
