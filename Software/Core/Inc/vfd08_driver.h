@@ -4,11 +4,7 @@
 #define __VFD08_H
 #include <stdint.h>
 #define OUTPUT 1
-
-static uint8_t VFD_SHOW=0xe8;
-static uint8_t VFD_BITS=0x07;
-static uint8_t VFD_LIGHTNESS=0xff;
-
+	
 /* 引脚分配 */
 /**SPI1 GPIO Configuration
     PA4     ------> SPI1_NSS
@@ -17,7 +13,9 @@ static uint8_t VFD_LIGHTNESS=0xff;
 */
 
 /* 底层适配函数 */
+void VFD_delay_us(uint32_t us);
 void VFD_delay_microseconds(uint8_t time);
+void VFD_SPI_Transmit(uint8_t data);
 void VFD_show(void);
 void VFD_init(void);
 void VFD_write_char(uint8_t x, uint8_t chr);

@@ -31,12 +31,13 @@ software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_exti.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
+software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc.h
+software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc_ex.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h
-software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 software\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
@@ -45,3 +46,11 @@ software\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h
 software\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
 software\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 software\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
+software\freertos.o: ../Core/Inc/vfd08_driver.h
+software\freertos.o: ../Core/Inc/rtc.h
+software\freertos.o: ../Core/Inc/usart.h
+software\freertos.o: ../Core/Inc/gpio.h
+software\freertos.o: ../Core/Inc/tim.h
+software\freertos.o: ../Core/Inc/adc.h
+software\freertos.o: D:\keil\ARM\ARMCC\Bin\..\include\stdio.h
+software\freertos.o: D:\keil\ARM\ARMCC\Bin\..\include\stdlib.h

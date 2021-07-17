@@ -22,12 +22,13 @@ software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_exti.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
+software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc.h
+software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc_ex.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h
-software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 software\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
@@ -45,8 +46,8 @@ software\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h
 software\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
 software\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 software\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
+software\main.o: ../Core/Inc/adc.h
 software\main.o: ../Core/Inc/rtc.h
-software\main.o: ../Core/Inc/spi.h
 software\main.o: ../Core/Inc/tim.h
 software\main.o: ../Core/Inc/usart.h
 software\main.o: ../Core/Inc/gpio.h

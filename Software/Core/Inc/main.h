@@ -44,14 +44,18 @@ typedef unsigned int u32;
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-extern volatile unsigned char SETTING_FLAG;
 extern volatile unsigned char MODE_FLAG;
 extern volatile unsigned char ENTER_FLAG;
+extern volatile unsigned char SETTING_FLAG;
+extern volatile unsigned char KEY1_PRESSED;
+extern volatile unsigned char KEY2_PRESSED;
+extern volatile unsigned char SWITCH_SET_TIME;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+extern char SET_TIME_HOUR_NUM;
+extern char SET_TIME_MINUTE_NUM;
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -66,6 +70,12 @@ void Error_Handler(void);
 #define MODE_GPIO_Port GPIOA
 #define ENTER_Pin GPIO_PIN_2
 #define ENTER_GPIO_Port GPIOA
+#define NCS_Pin GPIO_PIN_4
+#define NCS_GPIO_Port GPIOA
+#define SCLK_Pin GPIO_PIN_5
+#define SCLK_GPIO_Port GPIOA
+#define DIN_Pin GPIO_PIN_7
+#define DIN_GPIO_Port GPIOA
 #define EN_Pin GPIO_PIN_15
 #define EN_GPIO_Port GPIOB
 #define RESET_Pin GPIO_PIN_8
