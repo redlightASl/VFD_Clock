@@ -82,6 +82,13 @@ void Button_Control(void const * argument);
 
 void VFD_OP(void);
 void VFD_random_num(void);
+
+int fputc(int ch,FILE *f)
+{
+ uint8_t temp[1]={ch};
+ HAL_UART_Transmit(&huart1,temp,1,2);
+ return ch;
+}
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -170,6 +177,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+		//printf("hello");
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
@@ -187,13 +195,15 @@ void VFD_Show(void const * argument)
   /* USER CODE BEGIN VFD_Show */
 	//uint8_t txbuffer[10] = "test";
 	
+	/*
 	NowTime.Hours = 0;
 	NowTime.Minutes = 0;
 	NowTime.Seconds = 0;
+	*/
 	
 	VFD_OP();
 	VFD_random_num(); //显示随机变化的乱码
-	osDelay(100);
+	//osDelay(100);
 	
 	//osEvent ret;
   /* Infinite loop */
@@ -202,25 +212,42 @@ void VFD_Show(void const * argument)
 		//HAL_UART_Transmit(&huart1, txbuffer, sizeof(txbuffer), 0);
 		if(MODE_FLAG == 0) //显示模式
 		{
-			VFD_write_char(0, (NowTime.Hours / 10) + '0');
-			VFD_write_char(1, (NowTime.Hours % 10) + '0');
-			VFD_write_char(2,':');
-			VFD_write_char(3, (NowTime.Minutes / 10) + '0');
-			VFD_write_char(4, (NowTime.Minutes % 10) + '0');
-			VFD_write_char(5,':');
-			VFD_write_char(6, (NowTime.Seconds / 10) + '0');
-			VFD_write_char(7, (NowTime.Seconds % 10) + '0');
+			if(TIME_GET_FLAG == 1)
+			{
+				//printf("%d:%d:%d",NowTime.Hours,NowTime.Minutes,NowTime.Seconds);
+				VFD_write_char(0, (NowTime.Hours / 10) + '0');
+				VFD_write_char(1, (NowTime.Hours % 10) + '0');
+				VFD_write_char(2,':');
+				VFD_write_char(3, (NowTime.Minutes / 10) + '0');
+				VFD_write_char(4, (NowTime.Minutes % 10) + '0');
+				VFD_write_char(5,':');
+				VFD_write_char(6, (NowTime.Seconds / 10) + '0');
+				VFD_write_char(7, (NowTime.Seconds % 10) + '0');
+				TIME_GET_FLAG = 0;
+			}
+			else
+			{
+				osDelay(1);
+			}
 		}
 		else if(MODE_FLAG == 1) //设置模式
 		{
-			VFD_write_char(0, (SetTime.Hours / 10) + '0');
-			VFD_write_char(1, (SetTime.Hours % 10) + '0');
-			VFD_write_char(2,':');
-			VFD_write_char(3, (SetTime.Minutes / 10) + '0');
-			VFD_write_char(4, (SetTime.Minutes % 10) + '0');
-			VFD_write_char(5,':');
-			VFD_write_char(6, (SetTime.Seconds / 10) + '0');
-			VFD_write_char(7, (SetTime.Seconds % 10) + '0');
+			if(TIME_GET_FLAG == 1)
+			{
+				VFD_write_char(0, (SetTime.Hours / 10) + '0');
+				VFD_write_char(1, (SetTime.Hours % 10) + '0');
+				VFD_write_char(2,':');
+				VFD_write_char(3, (SetTime.Minutes / 10) + '0');
+				VFD_write_char(4, (SetTime.Minutes % 10) + '0');
+				VFD_write_char(5,':');
+				VFD_write_char(6, (SetTime.Seconds / 10) + '0');
+				VFD_write_char(7, (SetTime.Seconds % 10) + '0');
+				TIME_GET_FLAG = 0;
+			}
+			else
+			{
+				osDelay(1);
+			}
 		}
 		else if(MODE_FLAG == 2) //世界线变动模式
 		{
@@ -276,7 +303,15 @@ void RTC_Control(void const * argument)
   {
 		if(MODE_FLAG == 0) //显示模式
 		{
-			HAL_RTC_GetTime(&hrtc, &NowTime, RTC_FORMAT_BCD); //获取当前时间
+			if(TIME_GET_FLAG == 0)
+			{
+				HAL_RTC_GetTime(&hrtc, &NowTime, RTC_FORMAT_BIN); //获取当前时间
+				TIME_GET_FLAG = 1;
+			}
+			else
+			{
+				osDelay(1);
+			}
 		}
 		else if(MODE_FLAG == 1) //设置模式
 		{
@@ -292,11 +327,12 @@ void RTC_Control(void const * argument)
 			
 			if(ENTER_FLAG) //等待确认再执行
 			{
+				ENTER_FLAG = 0; //重置标志位
 				EnterSetTime.Hours = SetTime.Hours;
 				EnterSetTime.Minutes = SetTime.Minutes;
 				EnterSetTime.Seconds = 0; //默认将秒设置为0
-				HAL_RTC_SetTime(&hrtc, &EnterSetTime, RTC_FORMAT_BCD);
-				ENTER_FLAG = 0; //重置标志位
+				HAL_RTC_SetTime(&hrtc, &EnterSetTime, RTC_FORMAT_BIN);
+				TIME_GET_FLAG = 1;
 			}
 		}
 		else //世界线变动模式或出错
@@ -322,30 +358,39 @@ void Button_Control(void const * argument)
   for(;;)
   {
 		//轮询获取按钮状态
-		if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == 0) || (HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == 0)) //有按钮按下
+		if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) || 
+			(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //有按钮按下
 		{
 			osDelay(5); //消抖
 			
-			if(HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == 0) //KEY1
+			if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) && 
+				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_SET)) //KEY1
 			{
 				if(!KEY1_PRESSED) //如果KEY1第一次按下
 				{
 					KEY1_PRESSED = 1;
+					CHECK_KEY1 = 1;
+					__HAL_RCC_TIM1_CLK_ENABLE();
 					HAL_TIM_Base_Start(&htim1); //判断KEY1长短按
 					HAL_TIM_Base_Start_IT(&htim1); 
+					HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
 				}
 				else //如果KEY1不是第一次按下
 				{
 					osDelay(1); //等待定时器完成长短按判断
 				}
 			}
-			else if(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == 0) //KEY2
+			else if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_SET) && 
+				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //KEY2
 			{
 				if(!KEY2_PRESSED) //如果KEY2第一次按下
 				{
 					KEY2_PRESSED = 1;
+					CHECK_KEY2 = 1;
+					__HAL_RCC_TIM2_CLK_ENABLE();
 					HAL_TIM_Base_Start(&htim2); //判断KEY2长短按
-					HAL_TIM_Base_Start_IT(&htim2); 
+					HAL_TIM_Base_Start_IT(&htim2);
+					HAL_NVIC_EnableIRQ(TIM2_IRQn);
 				}
 				else //如果KEY2不是第一次按下
 				{
@@ -360,6 +405,7 @@ void Button_Control(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+/* 炫酷的启动动画1 */
 void VFD_OP(void)
 {
 	HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_RESET);
@@ -368,13 +414,13 @@ void VFD_OP(void)
 	HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET);
 	VFD_init();
 
-	VFD_write_char(0,'H');
-	VFD_write_char(1,'e');
-	VFD_write_char(2,'l');
-	VFD_write_char(3,'l');
-	VFD_write_char(4,'o');
-	VFD_write_char(5,'!');
-	VFD_write_char(6,'!');
+	VFD_write_char(0,'I');
+	VFD_write_char(1,'n');
+	VFD_write_char(2,'i');
+	VFD_write_char(3,'t');
+	VFD_write_char(4,'O');
+	VFD_write_char(5,'v');
+	VFD_write_char(6,'O');
 	VFD_write_char(7,'!');
 	for(int i = 1;i < 255; i++)
 	{
@@ -384,10 +430,12 @@ void VFD_OP(void)
 		VFD_SPI_Transmit(i); //最高255
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 		VFD_delay_us(1);
-		osDelay(10);
+		//osDelay(10);
+		osDelay(1);
 	}
 }
 
+/* 炫酷的启动动画2 */
 void VFD_random_num(void)
 {
 	int adc_seed;

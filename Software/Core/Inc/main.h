@@ -47,9 +47,14 @@ typedef unsigned int u32;
 extern volatile unsigned char MODE_FLAG;
 extern volatile unsigned char ENTER_FLAG;
 extern volatile unsigned char SETTING_FLAG;
+extern volatile unsigned char TIME_GET_FLAG;
 extern volatile unsigned char KEY1_PRESSED;
 extern volatile unsigned char KEY2_PRESSED;
 extern volatile unsigned char SWITCH_SET_TIME;
+extern volatile unsigned char KEY1_TIM_TURN_COUNTER;
+extern volatile unsigned char KEY2_TIM_TURN_COUNTER;
+extern volatile unsigned char CHECK_KEY1;
+extern volatile unsigned char CHECK_KEY2;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -66,10 +71,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+/* øÿ÷∆∞¥≈• */
 #define MODE_Pin GPIO_PIN_1
 #define MODE_GPIO_Port GPIOA
 #define ENTER_Pin GPIO_PIN_2
 #define ENTER_GPIO_Port GPIOA
+/* œ‘ æIO */
 #define NCS_Pin GPIO_PIN_4
 #define NCS_GPIO_Port GPIOA
 #define SCLK_Pin GPIO_PIN_5

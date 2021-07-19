@@ -50,13 +50,20 @@ volatile unsigned char SETTING_FLAG;
 volatile unsigned char MODE_FLAG;
 //确认按钮按下标志位
 volatile unsigned char ENTER_FLAG;
-
+//已获取时间标志位
+volatile unsigned char TIME_GET_FLAG;
 //按钮按下标志
 volatile unsigned char KEY1_PRESSED;
 volatile unsigned char KEY2_PRESSED;
-
+//要求检测按钮按下标志
+volatile unsigned char CHECK_KEY1;
+volatile unsigned char CHECK_KEY2;
 //设置时间切换标志
 volatile unsigned char SWITCH_SET_TIME;
+
+//定时器多次开启计数器
+volatile unsigned char KEY1_TIM_TURN_COUNTER;
+volatile unsigned char KEY2_TIM_TURN_COUNTER;
 
 //RTC设置时间：小时
 char SET_TIME_HOUR_NUM;
@@ -90,6 +97,7 @@ void MX_FREERTOS_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	/*
 	MODE_FLAG = 0;
 	SETTING_FLAG = 0;
 	ENTER_FLAG = 0;
@@ -98,6 +106,7 @@ int main(void)
 	SWITCH_SET_TIME = 0;
 	SET_TIME_HOUR_NUM = 0;
 	SET_TIME_MINUTE_NUM = 0;
+	*/
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -124,7 +133,12 @@ int main(void)
   MX_USART1_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-	
+	//HAL_TIM_Base_Stop_IT(&htim1);
+	//HAL_TIM_Base_Stop(&htim1);
+	//__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
+	//HAL_TIM_Base_Stop_IT(&htim2);
+	//HAL_TIM_Base_Stop(&htim2);
+	//__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -215,124 +229,159 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* 在定时器内完成长短按判断 */
 	if(htim == &htim1) //处理KEY1
 	{
-		HAL_TIM_Base_Stop_IT(&htim1);
-		HAL_TIM_Base_Stop(&htim1);
-		__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
-		if(HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == 0) //KEY1保持按下，长按
+		if(CHECK_KEY1 == 1)
 		{
-			//KEY1_LONG_PRESS = 1; //判断为KEY1长按
-			if(MODE_FLAG == 1) //设置模式
-			{
-				MODE_FLAG = 0;//切换模式
-				ENTER_FLAG = 1;
-			}
-			else //显示模式或世界线变动模式
-			{
-				MODE_FLAG = 1;//切换模式
-			}
-		}
-		else //KEY1停止按下，短按
+			CHECK_KEY1 = 0;
+			if(KEY1_TIM_TURN_COUNTER == 5)
 		{
-			//KEY1_SHORT_PRESS = 1;  //判断为KEY1短按
-			if(MODE_FLAG == 1) //设置模式
+			HAL_TIM_Base_Stop_IT(&htim1);
+			HAL_TIM_Base_Stop(&htim1);
+			__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
+			__HAL_RCC_TIM1_CLK_DISABLE();
+			HAL_NVIC_DisableIRQ(TIM1_UP_IRQn);
+			
+			if(HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == 0) //KEY1保持按下，长按
 			{
-				//时间增加
-				if(SWITCH_SET_TIME == 0) //设置小时
+				KEY1_PRESSED = 0;
+				//KEY1_LONG_PRESS = 1; //判断为KEY1长按
+				if(MODE_FLAG == 1) //设置模式
 				{
-					SET_TIME_HOUR_NUM++;
-					if(SET_TIME_HOUR_NUM > 23)
-					{
-						SET_TIME_HOUR_NUM = 0;
-					}
+					MODE_FLAG = 0;//切换模式
+					ENTER_FLAG = 1;
 				}
-				else if(SWITCH_SET_TIME == 1) //设置分钟
+				else //显示模式或世界线变动模式
 				{
-					SET_TIME_MINUTE_NUM++;
-					if(SET_TIME_MINUTE_NUM > 59)
-					{
-						SET_TIME_MINUTE_NUM = 0;
-					}
-				}
-				else
-				{
-					SWITCH_SET_TIME = 0; //防止溢出
-					SET_TIME_HOUR_NUM++;
-					if(SET_TIME_HOUR_NUM > 23)
-					{
-						SET_TIME_HOUR_NUM = 0;
-					}
+					MODE_FLAG = 1;//切换模式
 				}
 			}
-			else //显示模式或世界线变动模式
+			else //KEY1停止按下，短按
 			{
-				//无效果
+				KEY1_PRESSED = 0;
+				//KEY1_SHORT_PRESS = 1;  //判断为KEY1短按
+				if(MODE_FLAG == 1) //设置模式
+				{
+					//时间增加
+					if(SWITCH_SET_TIME == 0) //设置小时
+					{
+						SET_TIME_HOUR_NUM++;
+						if(SET_TIME_HOUR_NUM > 23)
+						{
+							SET_TIME_HOUR_NUM = 0;
+						}
+					}
+					else if(SWITCH_SET_TIME == 1) //设置分钟
+					{
+						SET_TIME_MINUTE_NUM++;
+						if(SET_TIME_MINUTE_NUM > 59)
+						{
+							SET_TIME_MINUTE_NUM = 0;
+						}
+					}
+					else
+					{
+						SWITCH_SET_TIME = 0; //防止溢出
+						SET_TIME_HOUR_NUM++;
+						if(SET_TIME_HOUR_NUM > 23)
+						{
+							SET_TIME_HOUR_NUM = 0;
+						}
+					}
+				}
+				else //显示模式或世界线变动模式
+				{
+					//无效果
+				}
 			}
+			
 		}
-		KEY1_PRESSED = 0;
+		else
+		{
+			KEY1_TIM_TURN_COUNTER++;
+		}
+		}
+		
 	}
 	else if(htim == &htim2) //处理KEY2
 	{
-		HAL_TIM_Base_Stop_IT(&htim2);
-		HAL_TIM_Base_Stop(&htim2);
-		__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
-		if(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == 0) //KEY2保持按下，长按
+		if(CHECK_KEY2 == 1)
 		{
-			//KEY2_LONG_PRESS = 1;  //判断为KEY2长按
-			if(MODE_FLAG == 1) //设置模式
-			{
-				SWITCH_SET_TIME++;//切换要设置的时间位
-				if(SWITCH_SET_TIME > 1)
-				{
-					SWITCH_SET_TIME = 0; //防止溢出
-				}
-			}
-			else if(MODE_FLAG == 0) //显示模式
-			{
-				MODE_FLAG = 2; //进入世界线变动模式
-			}
-			else //世界线变动模式
-			{
-				 MODE_FLAG = 0; //退出世界线变动模式
-			}
-		}
-		else //KEY2停止按下，短按
+			CHECK_KEY2 = 0;
+			if(KEY2_TIM_TURN_COUNTER == 5)
 		{
-			//KEY2_SHORT_PRESS = 1; //判断为KEY2短按
-			if(MODE_FLAG == 1) //设置模式
+			HAL_TIM_Base_Stop_IT(&htim2);
+			HAL_TIM_Base_Stop(&htim2);
+			__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
+			__HAL_RCC_TIM2_CLK_DISABLE();
+			HAL_NVIC_DisableIRQ(TIM2_IRQn);
+			
+			if(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == 0) //KEY2保持按下，长按
 			{
-				//时间减少
-				if(SWITCH_SET_TIME == 0) //设置小时
+				KEY2_PRESSED = 0;
+				//KEY2_LONG_PRESS = 1;  //判断为KEY2长按
+				if(MODE_FLAG == 1) //设置模式
 				{
-					SET_TIME_HOUR_NUM--;
-					if(SET_TIME_HOUR_NUM < 0)
+					SWITCH_SET_TIME++;//切换要设置的时间位
+					if(SWITCH_SET_TIME > 1)
 					{
-						SET_TIME_HOUR_NUM = 23;
+						SWITCH_SET_TIME = 0; //防止溢出
 					}
 				}
-				else if(SWITCH_SET_TIME == 1) //设置分钟
+				else if(MODE_FLAG == 0) //显示模式
 				{
-					SET_TIME_MINUTE_NUM--;
-					if(SET_TIME_MINUTE_NUM < 0)
-					{
-						SET_TIME_MINUTE_NUM = 59;
-					}
+					MODE_FLAG = 2; //进入世界线变动模式
 				}
-				else
+				else //世界线变动模式
 				{
-					SWITCH_SET_TIME = 0; //防止溢出
-					SET_TIME_HOUR_NUM--;
-					if(SET_TIME_HOUR_NUM < 0)
-					{
-						SET_TIME_HOUR_NUM = 23;
-					}
+					MODE_FLAG = 0; //退出世界线变动模式
 				}
 			}
-			else //显示模式或世界线变动模式
+			else //KEY2停止按下，短按
 			{
-				//无效果
+				KEY2_PRESSED = 0;
+				//KEY2_SHORT_PRESS = 1; //判断为KEY2短按
+				
+				if(MODE_FLAG == 1) //设置模式
+				{
+					//时间减少
+					if(SWITCH_SET_TIME == 0) //设置小时
+					{
+						SET_TIME_HOUR_NUM--;
+						if(SET_TIME_HOUR_NUM < 0)
+						{
+							SET_TIME_HOUR_NUM = 23;
+						}
+					}
+					else if(SWITCH_SET_TIME == 1) //设置分钟
+					{
+						SET_TIME_MINUTE_NUM--;
+						if(SET_TIME_MINUTE_NUM < 0)
+						{
+							SET_TIME_MINUTE_NUM = 59;
+						}
+					}
+					else
+					{
+						SWITCH_SET_TIME = 0; //防止溢出
+						SET_TIME_HOUR_NUM--;
+						if(SET_TIME_HOUR_NUM < 0)
+						{
+							SET_TIME_HOUR_NUM = 23;
+						}
+					}
+				}
+				else //显示模式或世界线变动模式
+				{
+					//无效果
+				}
 			}
+			KEY2_PRESSED = 0;
 		}
-		KEY2_PRESSED = 0;
+		else
+		{
+			KEY2_TIM_TURN_COUNTER++;
+		}
+		}
+		
 	}
 	
   /* USER CODE END Callback 0 */
