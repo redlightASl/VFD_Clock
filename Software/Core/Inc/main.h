@@ -44,22 +44,29 @@ typedef unsigned int u32;
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-extern volatile unsigned char MODE_FLAG;
-extern volatile unsigned char ENTER_FLAG;
+//设置模式进入标志位
 extern volatile unsigned char SETTING_FLAG;
+//当前模式标志位
+extern volatile unsigned char MODE_FLAG;
+//确认按钮按下标志位
+extern volatile unsigned char ENTER_FLAG;
+//已获取时间标志位
 extern volatile unsigned char TIME_GET_FLAG;
+//设置时间切换标志
+extern volatile unsigned char SWITCH_SET_TIME;
+//界面闪烁等待按钮复位标志
+extern volatile unsigned char WAIT_FOR_BUTTON;
+
+//按钮按下标志
 extern volatile unsigned char KEY1_PRESSED;
 extern volatile unsigned char KEY2_PRESSED;
-extern volatile unsigned char SWITCH_SET_TIME;
-extern volatile unsigned char KEY1_TIM_TURN_COUNTER;
-extern volatile unsigned char KEY2_TIM_TURN_COUNTER;
-extern volatile unsigned char CHECK_KEY1;
-extern volatile unsigned char CHECK_KEY2;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+//RTC设置时间：小时
 extern char SET_TIME_HOUR_NUM;
+//RTC设置时间：分钟
 extern char SET_TIME_MINUTE_NUM;
 /* USER CODE END EM */
 
@@ -71,12 +78,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-/* 控制按钮 */
 #define MODE_Pin GPIO_PIN_1
 #define MODE_GPIO_Port GPIOA
 #define ENTER_Pin GPIO_PIN_2
 #define ENTER_GPIO_Port GPIOA
-/* 显示IO */
 #define NCS_Pin GPIO_PIN_4
 #define NCS_GPIO_Port GPIOA
 #define SCLK_Pin GPIO_PIN_5

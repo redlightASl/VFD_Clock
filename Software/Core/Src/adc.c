@@ -21,7 +21,7 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-
+/* 用于产生真随机数 */
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;

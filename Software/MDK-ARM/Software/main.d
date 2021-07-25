@@ -48,7 +48,6 @@ software\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 software\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
 software\main.o: ../Core/Inc/adc.h
 software\main.o: ../Core/Inc/rtc.h
-software\main.o: ../Core/Inc/tim.h
 software\main.o: ../Core/Inc/usart.h
 software\main.o: ../Core/Inc/gpio.h
 software\main.o: D:\keil\ARM\ARMCC\Bin\..\include\stdio.h

@@ -50,7 +50,6 @@ software\freertos.o: ../Core/Inc/vfd08_driver.h
 software\freertos.o: ../Core/Inc/rtc.h
 software\freertos.o: ../Core/Inc/usart.h
 software\freertos.o: ../Core/Inc/gpio.h
-software\freertos.o: ../Core/Inc/tim.h
 software\freertos.o: ../Core/Inc/adc.h
 software\freertos.o: D:\keil\ARM\ARMCC\Bin\..\include\stdio.h
 software\freertos.o: D:\keil\ARM\ARMCC\Bin\..\include\stdlib.h

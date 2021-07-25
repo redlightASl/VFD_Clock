@@ -30,7 +30,6 @@
 #include "rtc.h"
 #include "usart.h"
 #include "gpio.h"
-#include "tim.h"
 #include "adc.h"
 
 #include <stdio.h>
@@ -67,6 +66,19 @@ KEY2 在显示模式长按：切换世界线变动模式
 RTC_TimeTypeDef NowTime;
 RTC_TimeTypeDef SetTime;
 
+enum FSM_KEYSTATE_U
+{
+	KEY_PRESS = 0, //按钮按下状态
+	KEY_JUDGE, //按钮等待判断状态
+	KEY_EX_KEY1LONG, //按钮操作状态
+	KEY_EX_KEY1SHORT,
+	KEY_EX_KEY2LONG,
+	KEY_EX_KEY2SHORT,
+	KEY_READY, //按钮等待复位状态
+	KEY_DEFAULT, //初始化默认状态
+};
+typedef enum FSM_KEYSTATE_U KeyState;
+	
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId VFDHandle;
@@ -82,7 +94,8 @@ void Button_Control(void const * argument);
 
 void VFD_OP(void);
 void VFD_random_num(void);
-
+void VFD_FlashEnter(void);
+	
 int fputc(int ch,FILE *f)
 {
  uint8_t temp[1]={ch};
@@ -177,7 +190,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		//printf("hello");
+	//printf("hello");
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
@@ -207,14 +220,19 @@ void VFD_Show(void const * argument)
 	
 	//osEvent ret;
   /* Infinite loop */
-  for(;;)
-  {
-		//HAL_UART_Transmit(&huart1, txbuffer, sizeof(txbuffer), 0);
+	for(;;)
+	{
+		if(WAIT_FOR_BUTTON == 1) //界面闪烁
+		{
+			VFD_FlashEnter();
+			osDelay(1);
+		}
+		
 		if(MODE_FLAG == 0) //显示模式
 		{
 			if(TIME_GET_FLAG == 1)
 			{
-				//printf("%d:%d:%d",NowTime.Hours,NowTime.Minutes,NowTime.Seconds);
+				//printf("%d:%d:%d\r\n",NowTime.Hours,NowTime.Minutes,NowTime.Seconds);
 				VFD_write_char(0, (NowTime.Hours / 10) + '0');
 				VFD_write_char(1, (NowTime.Hours % 10) + '0');
 				VFD_write_char(2,':');
@@ -253,7 +271,6 @@ void VFD_Show(void const * argument)
 		{
 			/* 动画效果待完善 */
 			int adc_seed;
-			//uint8_t num;
 	
 			//ADC已经在adc.h中开启
 			HAL_ADC_PollForConversion(&hadc1, 10);
@@ -272,18 +289,17 @@ void VFD_Show(void const * argument)
 					uint8_t num = rand()%10;
 					VFD_write_char(i, (num + '0'));
 				}
-				osDelay(1000);
-				osDelay(1000);
+				osDelay(100);
+				//osDelay(1000);
 			}
 		}
 		else
 		{
-			VFD_write_string(0,(uint8_t*)"ERROR!!!");
+			MODE_FLAG = 0;
+			//VFD_write_string(0,(uint8_t*)"ERROR!!!");
 		}
-		
-    osDelay(100);
-		
-  }
+		osDelay(1);
+	}
   /* USER CODE END VFD_Show */
 }
 
@@ -315,24 +331,21 @@ void RTC_Control(void const * argument)
 		}
 		else if(MODE_FLAG == 1) //设置模式
 		{
-			while(SETTING_FLAG)
+			if(TIME_GET_FLAG == 0)
 			{
-				osDelay(1); //等待按钮按下
+				SetTime.Hours = SET_TIME_HOUR_NUM; //从全局变量获得小时和分钟时间
+				SetTime.Minutes = SET_TIME_MINUTE_NUM;
+				SetTime.Seconds = 0;
+				TIME_GET_FLAG = 1;
 			}
-			SETTING_FLAG = 0; //重置标志位
 			
-			SetTime.Hours = SET_TIME_HOUR_NUM; //从全局变量获得小时和分钟时间
-			SetTime.Minutes = SET_TIME_MINUTE_NUM;
-			SetTime.Seconds = 0;
-			
-			if(ENTER_FLAG) //等待确认再执行
+			if(ENTER_FLAG == 1) //等待确认再执行
 			{
-				ENTER_FLAG = 0; //重置标志位
 				EnterSetTime.Hours = SetTime.Hours;
 				EnterSetTime.Minutes = SetTime.Minutes;
 				EnterSetTime.Seconds = 0; //默认将秒设置为0
 				HAL_RTC_SetTime(&hrtc, &EnterSetTime, RTC_FORMAT_BIN);
-				TIME_GET_FLAG = 1;
+				ENTER_FLAG = 0; //重置标志位
 			}
 		}
 		else //世界线变动模式或出错
@@ -353,53 +366,190 @@ void RTC_Control(void const * argument)
 void Button_Control(void const * argument)
 {
   /* USER CODE BEGIN Button_Control */
-	
+	static KeyState ks;
+	ks = KEY_DEFAULT;
   /* Infinite loop */
-  for(;;)
-  {
+	for(;;)
+	{
 		//轮询获取按钮状态
-		if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) || 
-			(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //有按钮按下
+		switch(ks)
 		{
-			osDelay(5); //消抖
-			
+		case KEY_PRESS: //按钮按下
+			ks = KEY_JUDGE;
 			if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) && 
-				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_SET)) //KEY1
+				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_SET)) //KEY1按下
 			{
-				if(!KEY1_PRESSED) //如果KEY1第一次按下
-				{
-					KEY1_PRESSED = 1;
-					CHECK_KEY1 = 1;
-					__HAL_RCC_TIM1_CLK_ENABLE();
-					HAL_TIM_Base_Start(&htim1); //判断KEY1长短按
-					HAL_TIM_Base_Start_IT(&htim1); 
-					HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
-				}
-				else //如果KEY1不是第一次按下
-				{
-					osDelay(1); //等待定时器完成长短按判断
-				}
+				KEY1_PRESSED = 1;
 			}
 			else if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_SET) && 
-				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //KEY2
+				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //KEY2按下
 			{
-				if(!KEY2_PRESSED) //如果KEY2第一次按下
+				KEY2_PRESSED = 1;
+			}
+			osDelay(500); //延时500ms进行长短按判断
+		break;
+		case KEY_JUDGE: //等待判断
+			if(KEY1_PRESSED)
+			{
+				KEY1_PRESSED = 0;
+				if(HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) //KEY1仍按下
 				{
-					KEY2_PRESSED = 1;
-					CHECK_KEY2 = 1;
-					__HAL_RCC_TIM2_CLK_ENABLE();
-					HAL_TIM_Base_Start(&htim2); //判断KEY2长短按
-					HAL_TIM_Base_Start_IT(&htim2);
-					HAL_NVIC_EnableIRQ(TIM2_IRQn);
+					ks = KEY_EX_KEY1LONG;//判定为KEY1长按
 				}
-				else //如果KEY2不是第一次按下
+				else
 				{
-					osDelay(1); //等待定时器完成长短按判断
+					ks = KEY_EX_KEY1SHORT;//判定为KEY1短按
 				}
 			}
+			else if(KEY2_PRESSED)
+			{
+				KEY2_PRESSED = 0;
+				if(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET) //KEY1仍按下
+				{
+					ks = KEY_EX_KEY2LONG;//判定为KEY2长按
+				}
+				else
+				{
+					ks = KEY_EX_KEY2SHORT;//判定为KEY2短按
+				}
+			}
+		break;
+		case KEY_EX_KEY1SHORT: //KEY1短按
+			ks = KEY_READY;
+			if(MODE_FLAG == 1) //设置模式
+			{
+				//时间增加
+				if(SWITCH_SET_TIME == 0) //设置小时
+				{
+					SET_TIME_HOUR_NUM++;
+					if(SET_TIME_HOUR_NUM > 23)
+					{
+						SET_TIME_HOUR_NUM = 0;
+					}
+				}
+				else if(SWITCH_SET_TIME == 1) //设置分钟
+				{
+					SET_TIME_MINUTE_NUM++;
+					if(SET_TIME_MINUTE_NUM > 59)
+					{
+						SET_TIME_MINUTE_NUM = 0;
+					}
+				}
+				else
+				{
+					SWITCH_SET_TIME = 0; //防止溢出
+					SET_TIME_HOUR_NUM++;
+					if(SET_TIME_HOUR_NUM > 23)
+					{
+						SET_TIME_HOUR_NUM = 0;
+					}
+				}
+			}
+			else //显示模式或世界线变动模式
+			{
+				//无效果
+			}
+		break;
+		case KEY_EX_KEY1LONG: //KEY1长按
+			ks = KEY_READY;
+			if(MODE_FLAG == 1) //设置模式
+			{
+				MODE_FLAG = 0; //切换模式
+				ENTER_FLAG = 1;
+			}
+			else //显示模式或世界线变动模式
+			{
+				MODE_FLAG = 1; //切换模式
+			}
+		break;
+		case KEY_EX_KEY2SHORT: //KEY2短按
+			ks = KEY_READY;
+			if(MODE_FLAG == 1) //设置模式
+			{
+				//时间减少
+				if(SWITCH_SET_TIME == 0) //设置小时
+				{
+					if(SET_TIME_HOUR_NUM == 0)
+					{
+						SET_TIME_HOUR_NUM = 23;
+					}
+					else
+					{
+						SET_TIME_HOUR_NUM--;
+					}
+				}
+				else if(SWITCH_SET_TIME == 1) //设置分钟
+				{
+					if(SET_TIME_MINUTE_NUM == 0)
+					{
+						SET_TIME_MINUTE_NUM = 59;
+					}
+					else
+					{
+						SET_TIME_MINUTE_NUM--;
+					}
+				}
+				else
+				{
+					SWITCH_SET_TIME = 0; //防止溢出
+					if(SET_TIME_HOUR_NUM == 0)
+					{
+						SET_TIME_HOUR_NUM = 23;
+					}
+					else
+					{
+						SET_TIME_HOUR_NUM--;
+					}
+				}
+			}
+			else //显示模式或世界线变动模式
+			{
+				//无效果
+			}
+		break;
+		case KEY_EX_KEY2LONG: //KEY2长按
+			if(MODE_FLAG == 1) //设置模式
+			{
+				SWITCH_SET_TIME++;//切换要设置的时间位
+				if(SWITCH_SET_TIME > 1)
+				{
+					SWITCH_SET_TIME = 0; //防止溢出
+				}
+			}
+			else if(MODE_FLAG == 0) //显示模式
+			{
+				MODE_FLAG = 2; //进入世界线变动模式
+			}
+			else //世界线变动模式
+			{
+				MODE_FLAG = 0; //退出世界线变动模式
+			}
+			ks = KEY_READY;
+		break;
+		case KEY_READY: //按钮完成长短按判断后，等待按钮复原的状态
+			while((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) || 
+				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //按钮还处于按下状态
+			{
+				WAIT_FOR_BUTTON = 1; //等待按钮复位
+				osDelay(1);
+			}
+			WAIT_FOR_BUTTON = 0;
+			ks = KEY_DEFAULT;//按钮恢复后进入起始状态
+		break;
+		default: //起始状态
+			if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) ||
+				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //有按钮按下
+			{
+				ks = KEY_PRESS; //转移到按钮按下状态
+				osDelay(5); //消抖
+			}
+			else
+			{
+				osDelay(1);
+			}
+		break;
 		}
-    osDelay(1);
-  }
+	}
   /* USER CODE END Button_Control */
 }
 
@@ -414,14 +564,14 @@ void VFD_OP(void)
 	HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET);
 	VFD_init();
 
-	VFD_write_char(0,'I');
-	VFD_write_char(1,'n');
-	VFD_write_char(2,'i');
-	VFD_write_char(3,'t');
-	VFD_write_char(4,'O');
-	VFD_write_char(5,'v');
-	VFD_write_char(6,'O');
-	VFD_write_char(7,'!');
+	VFD_write_char(0,'~');
+	VFD_write_char(1,'(');
+	VFD_write_char(2,'*');
+	VFD_write_char(3,'@');
+	VFD_write_char(4,'^');
+	VFD_write_char(5,'@');
+	VFD_write_char(6,'*');
+	VFD_write_char(7,'>');
 	for(int i = 1;i < 255; i++)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
@@ -459,6 +609,23 @@ void VFD_random_num(void)
 		osDelay(60);
 	}
 }
+
+/* 界面闪烁以表示完成一次按钮操作 */
+void VFD_FlashEnter(void)
+{
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	VFD_SPI_Transmit(0xe4);
+	VFD_delay_us(1);
+	VFD_SPI_Transmit(100); //最高255
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	osDelay(1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	VFD_SPI_Transmit(0xe4);
+	VFD_delay_us(1);
+	VFD_SPI_Transmit(254); //最高255
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+}
+
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

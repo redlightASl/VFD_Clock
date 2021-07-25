@@ -6,7 +6,6 @@
 "software\freertos.o"
 "software\adc.o"
 "software\rtc.o"
-"software\tim.o"
 "software\usart.o"
 "software\stm32f1xx_it.o"
 "software\stm32f1xx_hal_msp.o"
