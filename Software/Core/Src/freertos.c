@@ -16,9 +16,9 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
+  /* USER CODE END Header */
 
-/* Includes ------------------------------------------------------------------*/
+  /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -66,19 +66,6 @@ KEY2 在显示模式长按：切换世界线变动模式
 RTC_TimeTypeDef NowTime;
 RTC_TimeTypeDef SetTime;
 
-enum FSM_KEYSTATE_U
-{
-	KEY_PRESS = 0, //按钮按下状态
-	KEY_JUDGE, //按钮等待判断状态
-	KEY_EX_KEY1LONG, //按钮操作状态
-	KEY_EX_KEY1SHORT,
-	KEY_EX_KEY2LONG,
-	KEY_EX_KEY2SHORT,
-	KEY_READY, //按钮等待复位状态
-	KEY_DEFAULT, //初始化默认状态
-};
-typedef enum FSM_KEYSTATE_U KeyState;
-	
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId VFDHandle;
@@ -87,43 +74,47 @@ osThreadId ButtonHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void StartDefaultTask(void const * argument);
-void VFD_Show(void const * argument);
-void RTC_Control(void const * argument);
-void Button_Control(void const * argument);
+void StartDefaultTask(void const* argument);
+void VFD_Show(void const* argument);
+void RTC_Control(void const* argument);
+void Button_Control(void const* argument);
 
 void VFD_OP(void);
 void VFD_random_num(void);
 void VFD_FlashEnter(void);
-	
-int fputc(int ch,FILE *f)
+
+void DivergenceMeter(void);
+
+#ifdef DEBUG_PRINTF
+int fputc(int ch, FILE* f)
 {
- uint8_t temp[1]={ch};
- HAL_UART_Transmit(&huart1,temp,1,2);
- return ch;
+	uint8_t temp[1] = { ch };
+	HAL_UART_Transmit(&huart1, temp, 1, 2);
+	return ch;
 }
+#endif
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void const * argument);
-void VFD_Show(void const * argument);
-void RTC_Control(void const * argument);
-void Button_Control(void const * argument);
+void StartDefaultTask(void const* argument);
+void VFD_Show(void const* argument);
+void RTC_Control(void const* argument);
+void Button_Control(void const* argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+void vApplicationGetIdleTaskMemory(StaticTask_t** ppxIdleTaskTCBBuffer, StackType_t** ppxIdleTaskStackBuffer, uint32_t* pulIdleTaskStackSize);
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
 static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
 
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
+void vApplicationGetIdleTaskMemory(StaticTask_t** ppxIdleTaskTCBBuffer, StackType_t** ppxIdleTaskStackBuffer, uint32_t* pulIdleTaskStackSize)
 {
-  *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
-  *ppxIdleTaskStackBuffer = &xIdleStack[0];
-  *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
-  /* place for user code */
+	*ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+	*ppxIdleTaskStackBuffer = &xIdleStack[0];
+	*pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+	/* place for user code */
 }
 /* USER CODE END GET_IDLE_TASK_MEMORY */
 
@@ -133,46 +124,46 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
   * @retval None
   */
 void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
-	
-  /* USER CODE END Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_MUTEX */
+	/* add mutexes, ... */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* add semaphores, ... */
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
+	/* USER CODE BEGIN RTOS_TIMERS */
+	/* start timers, add new ones, ... */
+	/* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+	/* USER CODE BEGIN RTOS_QUEUES */
+	/* add queues, ... */
+	/* USER CODE END RTOS_QUEUES */
 
-  /* definition and creation of VFD */
-  osThreadDef(VFD, VFD_Show, osPriorityHigh, 0, 128);
-  VFDHandle = osThreadCreate(osThread(VFD), NULL);
+	/* Create the thread(s) */
+	/* definition and creation of defaultTask */
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* definition and creation of RTC */
-  osThreadDef(RTC, RTC_Control, osPriorityHigh, 0, 128);
-  RTCHandle = osThreadCreate(osThread(RTC), NULL);
+	/* definition and creation of VFD */
+	osThreadDef(VFD, VFD_Show, osPriorityHigh, 0, 128);
+	VFDHandle = osThreadCreate(osThread(VFD), NULL);
 
-  /* definition and creation of Button */
-  osThreadDef(Button, Button_Control, osPriorityHigh, 0, 128);
-  ButtonHandle = osThreadCreate(osThread(Button), NULL);
+	/* definition and creation of RTC */
+	osThreadDef(RTC, RTC_Control, osPriorityHigh, 0, 128);
+	RTCHandle = osThreadCreate(osThread(RTC), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
+	/* definition and creation of Button */
+	osThreadDef(Button, Button_Control, osPriorityHigh, 0, 128);
+	ButtonHandle = osThreadCreate(osThread(Button), NULL);
+
+	/* USER CODE BEGIN RTOS_THREADS */
+	/* add threads, ... */
+	/* USER CODE END RTOS_THREADS */
 
 }
 
@@ -182,18 +173,17 @@ void MX_FREERTOS_Init(void) {
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+  /* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const* argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-	
-  /* Infinite loop */
-  for(;;)
-  {
-	//printf("hello");
-    osDelay(1);
-  }
-  /* USER CODE END StartDefaultTask */
+	/* USER CODE BEGIN StartDefaultTask */
+
+	/* Infinite loop */
+	for (;;)
+	{
+		osDelay(1);
+	}
+	/* USER CODE END StartDefaultTask */
 }
 
 /* USER CODE BEGIN Header_VFD_Show */
@@ -203,42 +193,30 @@ void StartDefaultTask(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_VFD_Show */
-void VFD_Show(void const * argument)
+void VFD_Show(void const* argument)
 {
-  /* USER CODE BEGIN VFD_Show */
-	//uint8_t txbuffer[10] = "test";
-	
-	/*
-	NowTime.Hours = 0;
-	NowTime.Minutes = 0;
-	NowTime.Seconds = 0;
-	*/
-	
+	/* USER CODE BEGIN VFD_Show */
 	VFD_OP();
 	VFD_random_num(); //显示随机变化的乱码
-	//osDelay(100);
-	
-	//osEvent ret;
   /* Infinite loop */
-	for(;;)
+	for (;;)
 	{
-		if(WAIT_FOR_BUTTON == 1) //界面闪烁
+		if (WAIT_FOR_BUTTON == 1) //界面闪烁
 		{
 			VFD_FlashEnter();
 			osDelay(1);
 		}
-		
-		if(MODE_FLAG == 0) //显示模式
+
+		if (MODE_FLAG == 0) //显示模式
 		{
-			if(TIME_GET_FLAG == 1)
+			if (TIME_GET_FLAG == 1)
 			{
-				//printf("%d:%d:%d\r\n",NowTime.Hours,NowTime.Minutes,NowTime.Seconds);
 				VFD_write_char(0, (NowTime.Hours / 10) + '0');
 				VFD_write_char(1, (NowTime.Hours % 10) + '0');
-				VFD_write_char(2,':');
+				VFD_write_char(2, ':');
 				VFD_write_char(3, (NowTime.Minutes / 10) + '0');
 				VFD_write_char(4, (NowTime.Minutes % 10) + '0');
-				VFD_write_char(5,':');
+				VFD_write_char(5, ':');
 				VFD_write_char(6, (NowTime.Seconds / 10) + '0');
 				VFD_write_char(7, (NowTime.Seconds % 10) + '0');
 				TIME_GET_FLAG = 0;
@@ -248,16 +226,16 @@ void VFD_Show(void const * argument)
 				osDelay(1);
 			}
 		}
-		else if(MODE_FLAG == 1) //设置模式
+		else if (MODE_FLAG == 1) //设置模式
 		{
-			if(TIME_GET_FLAG == 1)
+			if (TIME_GET_FLAG == 1)
 			{
 				VFD_write_char(0, (SetTime.Hours / 10) + '0');
 				VFD_write_char(1, (SetTime.Hours % 10) + '0');
-				VFD_write_char(2,':');
+				VFD_write_char(2, ':');
 				VFD_write_char(3, (SetTime.Minutes / 10) + '0');
 				VFD_write_char(4, (SetTime.Minutes % 10) + '0');
-				VFD_write_char(5,':');
+				VFD_write_char(5, ':');
 				VFD_write_char(6, (SetTime.Seconds / 10) + '0');
 				VFD_write_char(7, (SetTime.Seconds % 10) + '0');
 				TIME_GET_FLAG = 0;
@@ -267,31 +245,10 @@ void VFD_Show(void const * argument)
 				osDelay(1);
 			}
 		}
-		else if(MODE_FLAG == 2) //世界线变动模式
+		else if (MODE_FLAG == 2) //世界线变动模式
 		{
 			/* 动画效果待完善 */
-			int adc_seed;
-	
-			//ADC已经在adc.h中开启
-			HAL_ADC_PollForConversion(&hadc1, 10);
-			if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
-			{
-				adc_seed = HAL_ADC_GetValue(&hadc1);
-			}
-			srand(adc_seed);
-	
-			VFD_write_char(0, '1');
-			VFD_write_char(1, '.');
-			for(int count = 0; count < 8; count++)
-			{
-				for(int i = 2; i < 8; i++)
-				{
-					uint8_t num = rand()%10;
-					VFD_write_char(i, (num + '0'));
-				}
-				osDelay(100);
-				//osDelay(1000);
-			}
+			DivergenceMeter();
 		}
 		else
 		{
@@ -300,7 +257,7 @@ void VFD_Show(void const * argument)
 		}
 		osDelay(1);
 	}
-  /* USER CODE END VFD_Show */
+	/* USER CODE END VFD_Show */
 }
 
 /* USER CODE BEGIN Header_RTC_Control */
@@ -310,36 +267,38 @@ void VFD_Show(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_RTC_Control */
-void RTC_Control(void const * argument)
+void RTC_Control(void const* argument)
 {
-  /* USER CODE BEGIN RTC_Control */
+	/* USER CODE BEGIN RTC_Control */
 	RTC_TimeTypeDef EnterSetTime;
-  /* Infinite loop */
-  for(;;)
-  {
-		if(MODE_FLAG == 0) //显示模式
+	/* Infinite loop */
+	for (;;)
+	{
+		if (MODE_FLAG == 0) //显示模式
 		{
-			if(TIME_GET_FLAG == 0)
+			if (TIME_GET_FLAG == 0)
 			{
 				HAL_RTC_GetTime(&hrtc, &NowTime, RTC_FORMAT_BIN); //获取当前时间
 				TIME_GET_FLAG = 1;
 			}
-			else
+			else //时间设置全局变量跟随RTC实时变化
 			{
+				SET_TIME_HOUR_NUM = NowTime.Hours;
+				SET_TIME_MINUTE_NUM = NowTime.Minutes;
 				osDelay(1);
 			}
 		}
-		else if(MODE_FLAG == 1) //设置模式
+		else if (MODE_FLAG == 1) //设置模式
 		{
-			if(TIME_GET_FLAG == 0)
+			if (TIME_GET_FLAG == 0)
 			{
 				SetTime.Hours = SET_TIME_HOUR_NUM; //从全局变量获得小时和分钟时间
 				SetTime.Minutes = SET_TIME_MINUTE_NUM;
 				SetTime.Seconds = 0;
 				TIME_GET_FLAG = 1;
 			}
-			
-			if(ENTER_FLAG == 1) //等待确认再执行
+
+			if (ENTER_FLAG == 1) //等待确认再执行
 			{
 				EnterSetTime.Hours = SetTime.Hours;
 				EnterSetTime.Minutes = SetTime.Minutes;
@@ -352,8 +311,8 @@ void RTC_Control(void const * argument)
 		{
 			osDelay(1); //什么也不做
 		}
-  }
-  /* USER CODE END RTC_Control */
+	}
+	/* USER CODE END RTC_Control */
 }
 
 /* USER CODE BEGIN Header_Button_Control */
@@ -363,36 +322,36 @@ void RTC_Control(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_Button_Control */
-void Button_Control(void const * argument)
+void Button_Control(void const* argument)
 {
-  /* USER CODE BEGIN Button_Control */
+	/* USER CODE BEGIN Button_Control */
 	static KeyState ks;
 	ks = KEY_DEFAULT;
-  /* Infinite loop */
-	for(;;)
+	/* Infinite loop */
+	for (;;)
 	{
 		//轮询获取按钮状态
-		switch(ks)
+		switch (ks)
 		{
 		case KEY_PRESS: //按钮按下
 			ks = KEY_JUDGE;
-			if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) && 
+			if ((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) &&
 				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_SET)) //KEY1按下
 			{
 				KEY1_PRESSED = 1;
 			}
-			else if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_SET) && 
+			else if ((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_SET) &&
 				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //KEY2按下
 			{
 				KEY2_PRESSED = 1;
 			}
 			osDelay(500); //延时500ms进行长短按判断
-		break;
+			break;
 		case KEY_JUDGE: //等待判断
-			if(KEY1_PRESSED)
+			if (KEY1_PRESSED)
 			{
 				KEY1_PRESSED = 0;
-				if(HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) //KEY1仍按下
+				if (HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) //KEY1仍按下
 				{
 					ks = KEY_EX_KEY1LONG;//判定为KEY1长按
 				}
@@ -401,10 +360,10 @@ void Button_Control(void const * argument)
 					ks = KEY_EX_KEY1SHORT;//判定为KEY1短按
 				}
 			}
-			else if(KEY2_PRESSED)
+			else if (KEY2_PRESSED)
 			{
 				KEY2_PRESSED = 0;
-				if(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET) //KEY1仍按下
+				if (HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET) //KEY1仍按下
 				{
 					ks = KEY_EX_KEY2LONG;//判定为KEY2长按
 				}
@@ -413,24 +372,24 @@ void Button_Control(void const * argument)
 					ks = KEY_EX_KEY2SHORT;//判定为KEY2短按
 				}
 			}
-		break;
+			break;
 		case KEY_EX_KEY1SHORT: //KEY1短按
 			ks = KEY_READY;
-			if(MODE_FLAG == 1) //设置模式
+			if (MODE_FLAG == 1) //设置模式
 			{
 				//时间增加
-				if(SWITCH_SET_TIME == 0) //设置小时
+				if (SWITCH_SET_TIME == 0) //设置小时
 				{
 					SET_TIME_HOUR_NUM++;
-					if(SET_TIME_HOUR_NUM > 23)
+					if (SET_TIME_HOUR_NUM > 23)
 					{
 						SET_TIME_HOUR_NUM = 0;
 					}
 				}
-				else if(SWITCH_SET_TIME == 1) //设置分钟
+				else if (SWITCH_SET_TIME == 1) //设置分钟
 				{
 					SET_TIME_MINUTE_NUM++;
-					if(SET_TIME_MINUTE_NUM > 59)
+					if (SET_TIME_MINUTE_NUM > 59)
 					{
 						SET_TIME_MINUTE_NUM = 0;
 					}
@@ -439,7 +398,7 @@ void Button_Control(void const * argument)
 				{
 					SWITCH_SET_TIME = 0; //防止溢出
 					SET_TIME_HOUR_NUM++;
-					if(SET_TIME_HOUR_NUM > 23)
+					if (SET_TIME_HOUR_NUM > 23)
 					{
 						SET_TIME_HOUR_NUM = 0;
 					}
@@ -449,10 +408,10 @@ void Button_Control(void const * argument)
 			{
 				//无效果
 			}
-		break;
+			break;
 		case KEY_EX_KEY1LONG: //KEY1长按
 			ks = KEY_READY;
-			if(MODE_FLAG == 1) //设置模式
+			if (MODE_FLAG == 1) //设置模式
 			{
 				MODE_FLAG = 0; //切换模式
 				ENTER_FLAG = 1;
@@ -461,15 +420,15 @@ void Button_Control(void const * argument)
 			{
 				MODE_FLAG = 1; //切换模式
 			}
-		break;
+			break;
 		case KEY_EX_KEY2SHORT: //KEY2短按
 			ks = KEY_READY;
-			if(MODE_FLAG == 1) //设置模式
+			if (MODE_FLAG == 1) //设置模式
 			{
 				//时间减少
-				if(SWITCH_SET_TIME == 0) //设置小时
+				if (SWITCH_SET_TIME == 0) //设置小时
 				{
-					if(SET_TIME_HOUR_NUM == 0)
+					if (SET_TIME_HOUR_NUM == 0)
 					{
 						SET_TIME_HOUR_NUM = 23;
 					}
@@ -478,9 +437,9 @@ void Button_Control(void const * argument)
 						SET_TIME_HOUR_NUM--;
 					}
 				}
-				else if(SWITCH_SET_TIME == 1) //设置分钟
+				else if (SWITCH_SET_TIME == 1) //设置分钟
 				{
-					if(SET_TIME_MINUTE_NUM == 0)
+					if (SET_TIME_MINUTE_NUM == 0)
 					{
 						SET_TIME_MINUTE_NUM = 59;
 					}
@@ -492,7 +451,7 @@ void Button_Control(void const * argument)
 				else
 				{
 					SWITCH_SET_TIME = 0; //防止溢出
-					if(SET_TIME_HOUR_NUM == 0)
+					if (SET_TIME_HOUR_NUM == 0)
 					{
 						SET_TIME_HOUR_NUM = 23;
 					}
@@ -506,17 +465,17 @@ void Button_Control(void const * argument)
 			{
 				//无效果
 			}
-		break;
+			break;
 		case KEY_EX_KEY2LONG: //KEY2长按
-			if(MODE_FLAG == 1) //设置模式
+			if (MODE_FLAG == 1) //设置模式
 			{
 				SWITCH_SET_TIME++;//切换要设置的时间位
-				if(SWITCH_SET_TIME > 1)
+				if (SWITCH_SET_TIME > 1)
 				{
 					SWITCH_SET_TIME = 0; //防止溢出
 				}
 			}
-			else if(MODE_FLAG == 0) //显示模式
+			else if (MODE_FLAG == 0) //显示模式
 			{
 				MODE_FLAG = 2; //进入世界线变动模式
 			}
@@ -525,19 +484,19 @@ void Button_Control(void const * argument)
 				MODE_FLAG = 0; //退出世界线变动模式
 			}
 			ks = KEY_READY;
-		break;
+			break;
 		case KEY_READY: //按钮完成长短按判断后，等待按钮复原的状态
-			while((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) || 
+			while ((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) ||
 				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //按钮还处于按下状态
 			{
 				WAIT_FOR_BUTTON = 1; //等待按钮复位
 				osDelay(1);
 			}
 			WAIT_FOR_BUTTON = 0;
-			ks = KEY_DEFAULT;//按钮恢复后进入起始状态
-		break;
+			ks = KEY_DEFAULT; //按钮恢复后进入起始状态
+			break;
 		default: //起始状态
-			if((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) ||
+			if ((HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin) == GPIO_PIN_RESET) ||
 				(HAL_GPIO_ReadPin(ENTER_GPIO_Port, ENTER_Pin) == GPIO_PIN_RESET)) //有按钮按下
 			{
 				ks = KEY_PRESS; //转移到按钮按下状态
@@ -547,10 +506,10 @@ void Button_Control(void const * argument)
 			{
 				osDelay(1);
 			}
-		break;
+			break;
 		}
 	}
-  /* USER CODE END Button_Control */
+	/* USER CODE END Button_Control */
 }
 
 /* Private application code --------------------------------------------------*/
@@ -564,15 +523,15 @@ void VFD_OP(void)
 	HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET);
 	VFD_init();
 
-	VFD_write_char(0,'~');
-	VFD_write_char(1,'(');
-	VFD_write_char(2,'*');
-	VFD_write_char(3,'@');
-	VFD_write_char(4,'^');
-	VFD_write_char(5,'@');
-	VFD_write_char(6,'*');
-	VFD_write_char(7,'>');
-	for(int i = 1;i < 255; i++)
+	VFD_write_char(0, '~');
+	VFD_write_char(1, '(');
+	VFD_write_char(2, '*');
+	VFD_write_char(3, '@');
+	VFD_write_char(4, '^');
+	VFD_write_char(5, '@');
+	VFD_write_char(6, '*');
+	VFD_write_char(7, '>');
+	for (int i = 1;i < 255; i++)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 		VFD_SPI_Transmit(0xe4);
@@ -589,21 +548,20 @@ void VFD_OP(void)
 void VFD_random_num(void)
 {
 	int adc_seed;
-	uint8_t num;
-	
+
 	//ADC已经在adc.h中开启
 	HAL_ADC_PollForConversion(&hadc1, 10);
-	if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
+	if (HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
 	{
 		adc_seed = HAL_ADC_GetValue(&hadc1);
 	}
 	srand(adc_seed);
-	
-	for(int count = 0; count < 8; count++)
+
+	for (int count = 0; count < 8; count++)
 	{
-		for(int i = 0; i < 8; i++)
+		for (int i = 0; i < 8; i++)
 		{
-			uint8_t num = rand()%10;
+			uint8_t num = rand() % 10;
 			VFD_write_char(i, (num + '0'));
 		}
 		osDelay(60);
@@ -624,6 +582,102 @@ void VFD_FlashEnter(void)
 	VFD_delay_us(1);
 	VFD_SPI_Transmit(254); //最高255
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+}
+
+/* 世界线变动率探测仪动画 */
+void DivergenceMeter(void)
+{
+	Alpha();
+}
+
+/* 世界线选项 */
+void Alpha(void) //α基准世界线
+{
+	//0.571082
+	VFD_write_char(0, '0');
+	VFD_write_char(1, '.');
+	VFD_write_char(2, '5');
+	VFD_write_char(3, '7');
+	VFD_write_char(4, '1');
+	VFD_write_char(5, '0');
+	VFD_write_char(6, '8');
+	VFD_write_char(7, '2');
+}
+
+void AlphaT(void) //α世界线变动
+{
+	int adc_seed;
+
+	//ADC已经在adc.h中开启
+	HAL_ADC_PollForConversion(&hadc1, 10);
+	if (HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
+	{
+		adc_seed = HAL_ADC_GetValue(&hadc1);
+	}
+	srand(adc_seed);
+
+	VFD_write_char(0, '0');
+	VFD_write_char(1, '.');
+	for (int count = 0; count < 8; count++)
+	{
+		for (int i = 2; i < 8; i++)
+		{
+			uint8_t num = rand() % 10;
+			VFD_write_char(i, (num + '0'));
+		}
+		osDelay(1000);
+	}
+}
+
+void Beta(void) //β基准世界线
+{
+	//1.129848
+	VFD_write_char(0, '1');
+	VFD_write_char(1, '.');
+	VFD_write_char(2, '1');
+	VFD_write_char(3, '2');
+	VFD_write_char(4, '9');
+	VFD_write_char(5, '8');
+	VFD_write_char(6, '4');
+	VFD_write_char(7, '8');
+}
+
+void BetaT(void) //β世界线变动
+{
+	int adc_seed;
+
+	//ADC已经在adc.h中开启
+	HAL_ADC_PollForConversion(&hadc1, 10);
+	if (HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
+	{
+		adc_seed = HAL_ADC_GetValue(&hadc1);
+	}
+	srand(adc_seed);
+
+	VFD_write_char(0, '1');
+	VFD_write_char(1, '.');
+	for (int count = 0; count < 8; count++)
+	{
+		for (int i = 2; i < 8; i++)
+		{
+			uint8_t num = rand() % 10;
+			VFD_write_char(i, (num + '0'));
+		}
+		osDelay(2000);
+	}
+}
+
+void TrueEnding(void) //结局世界线
+{
+	//1.048596
+	VFD_write_char(0, '1');
+	VFD_write_char(1, '.');
+	VFD_write_char(2, '0');
+	VFD_write_char(3, '4');
+	VFD_write_char(4, '8');
+	VFD_write_char(5, '5');
+	VFD_write_char(6, '9');
+	VFD_write_char(7, '6');
 }
 
 /* USER CODE END Application */

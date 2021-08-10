@@ -37,6 +37,8 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+#define DEBUG_PRINTF
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -64,6 +66,19 @@ extern volatile unsigned char KEY2_PRESSED;
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+enum FSM_KEYSTATE_U
+{
+	KEY_PRESS = 0, //按钮按下状态
+	KEY_JUDGE, //按钮等待判断状态
+	KEY_EX_KEY1LONG, //按钮操作状态
+	KEY_EX_KEY1SHORT,
+	KEY_EX_KEY2LONG,
+	KEY_EX_KEY2SHORT,
+	KEY_READY, //按钮等待复位状态
+	KEY_DEFAULT, //初始化默认状态
+};
+typedef enum FSM_KEYSTATE_U KeyState;
+
 //RTC设置时间：小时
 extern char SET_TIME_HOUR_NUM;
 //RTC设置时间：分钟
@@ -74,7 +89,12 @@ extern char SET_TIME_MINUTE_NUM;
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+/* 世界线数值 */
+void Alpha(void);//α世界线
+void Beta(void);//β世界线
+void AlphaT(void);//α变动世界线
+void BetaT(void);//β变动世界线
+void TrueEnding(void);//1.048596%结局世界线
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
